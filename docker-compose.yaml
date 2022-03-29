@@ -1,0 +1,105 @@
+version: '3.9'
+
+services:
+  notifications-db:
+    image: postgres:latest
+    restart: always
+    privileged: true
+    volumes:
+      - ./postgres:/var/lib/postgresql/data/
+    ports:
+      - "5431:5432"
+    environment:
+      POSTGRES_DB: notifications
+      POSTGRES_USER: django_db
+      POSTGRES_PASSWORD: django_db_password
+    networks:
+      notifications_net:
+
+  notifications-redis:
+    image: redis:latest
+    ports:
+      - "6378:6379"
+    networks:
+      notifications_net:
+
+  notifications-backend:
+    build:
+      context: ./backend
+    image: backend-image
+    command: bash -c "
+      wait-for notifications-db:5432
+      && python manage.py migrate
+      && python manage.py createmysuperuser
+      && gunicorn settings.wsgi -b 0.0.0.0:8000
+      "
+    restart: always
+    ports:
+      - "8080:8000"
+    env_file:
+      - ./.env/.project_env
+    volumes:
+      - type: bind
+        source: ./backend
+        target: /backend
+    networks:
+      notifications_net:
+    depends_on:
+      - notifications-db
+      - notifications-redis
+
+  notifications-celery:
+    restart: always
+    image: backend-image
+    command: bash -c "
+      wait-for notifications-backend:8000
+      && wait-for notifications-redis:6379
+      -- celery -A settings worker -l info
+      "
+    env_file:
+      - ./.env/.project_env
+    networks:
+      notifications_net:
+    depends_on:
+      - notifications-db
+      - notifications-redis
+      - notifications-backend
+
+  notifications-flower:
+    restart: always
+    image: backend-image
+    command: bash -c "
+      wait-for notifications-backend:8000
+      && wait-for notifications-redis:6379
+      -- celery -A settings --broker=redis://notifications-redis:6379 flower
+      "
+    env_file:
+      - ./.env/.project_env
+    ports:
+      - "5555:5555"
+    networks:
+      notifications_net:
+    depends_on:
+      - notifications-db
+      - notifications-redis
+      - notifications-backend
+      - notifications-celery
+
+  notifications-nginx:
+    build:
+      context: ./nginx
+    ports:
+      - "80:80"
+    restart: always
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      notifications_net:
+    depends_on:
+      - notifications-db
+      - notifications-backend
+
+volumes:
+  postgres:
+networks:
+  notifications_net:

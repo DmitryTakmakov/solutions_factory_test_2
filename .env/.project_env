@@ -1,0 +1,15 @@
+DB_ENGINE=django.db.backends.postgresql_psycopg2
+DB_NAME=notifications
+DB_USER=django_db
+DB_PASSWORD=django_db_password
+DB_HOST=notifications-db
+DB_PORT=5432
+
+CELERY_BROKER=redis://notifications-redis:6379
+
+SUPERUSER=superadmin
+SUPERUSER_PASS=superpassword
+
+API_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Nzg5NjM2MDQsImlzcyI6ImZhYnJpcXVlIiwibmFtZSI6IkRtaXRyeVRha2htYWtvdiJ9.LMiA3SqNDkk5r1pgTHLhz51eQIgxjWeVgoBsZnWtLb4
+
+DJANGO_SECRET_KEY=django-insecure-636d=3^(&u0fx5pjp*-_6nq34zg8fjd3^gky6d)0v5-se4b$_h

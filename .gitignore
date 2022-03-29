@@ -1,0 +1,13 @@
+/venv/*
+/.idea/
+/.idea/*
+*.sqlite3
+*.key
+admin/
+logs/
+docker_db_pass
+docker_db_root_pass
+mysql/
+rest_framework/
+postgres/
+drf-yasg/
